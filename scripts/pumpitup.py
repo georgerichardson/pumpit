@@ -296,7 +296,47 @@ def binary_encode(series, le):
 
     return binary_encoded, binary_columns, binary_headers
 
-def fill_missing_knn(df, column)
+def fill_missing_knn(series, series_missing_flags, df_encoded, k=5):
+    '''
+    Find the missing values in a series by finding k nearest neighbours and 
+    using their information to fill in the missing data.
+
+    Returns:
+    series - original series with missing values filled in by knn algorithm
+    '''
+    data_type = series.dtype
+
+    series_exist_flags = series_missing_flags == False
+    series_missing = series[series_missing_flags]
+    series_exist = series[series_exist_flags]
+
+    df_missing = df_encoded[series_missing_flags]
+    df_exist = df_encoded[series_exist_flags]
+
+    neigh = KNeighborsClassifier(n_neighbors=k)
+
+    series_exist = series_exist.values.reshape(-1):
+
+    label, indices = neigh.kneigbors(df_exist, n_neighbors=k)
+
+    neigh.fit(df_exist, series_exist)
+
+    if dtype == 'float64':
+        missing_means = [np.mean(series_exist[i]) for i in indices]
+        series[series_missing_flags] = missing_means
+
+    elif dtype == 'int64':
+        missing_means = [int(np.mean(series_exist[i])) for i in indices]
+        series[series_missing_flags] = missing_means
+
+    elif dtype == 'object':
+        missing_mode = [stats.mode(series_exist[i]) for i in indices]
+        #missing_mode = [list(list(x.mode)[0]) for x in missing_mode]
+        series[series_missing_flags] = missing_mode
+
+    return series        
+
+
 
 
 
