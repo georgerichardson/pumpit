@@ -18,9 +18,18 @@ def unique_count(df):
     '''
     Prints the name of each feature column and the number of unique elements that 
     it contains.
+
+    Returns:
+    df_uniques - dataframe with two columns for the feature names and the number
+                 of unique elements corresponding to the feature.
     '''
+    d = {'Feature':[], 'Uniques': []}
     for column in df.columns:
-        print(column, len(df[column].unique()))
+        d['Feature'].append(column)
+        d['Uniques'].append(len(df[column].unique()))
+
+    df_uniques = pd.DataFrame(d)
+    return df_uniques
 
 
 def remove_features(df, features=None):
@@ -42,7 +51,12 @@ def percent_missing(df):
     '''
     Prints a list showing the percentage of missing values in each feature 
     column plus their types (0, 'NaN' or 'none')
+
+    Returns:
+    percent_missing - list of the percent of missing values
     '''
+    percent_missing = []
+
     total = len(df)
 
     for column in df.columns:
@@ -51,22 +65,24 @@ def percent_missing(df):
         if series.dtype == 'object':
             if series.isnull().any():
                 percentage = (sum(series.isnull()) / total)  * 100
-                print(column, '{:.2f}'.format(percentage), 'NaN')
+                print(column, '{:.6f}'.format(percentage), 'NaN')
 
             elif series.str.contains('none').any():
                 num = len(series[series == 'none'])
                 percentage = (num / total) * 100
-                print(column, '{:.2f}'.format(percentage), 'none')
+                print(column, '{:.6f}'.format(percentage), 'none')
 
         elif series.dtype == 'float64':
             num = sum(abs(series) < 1e-6)
             percentage = num / total * 100
-            print(column, '{:.2f}'.format(percentage), '0')
+            print(column, '{:.6f}'.format(percentage), '0')
 
         elif series.dtype == 'int64':
             num = sum(series == 0)
             percentage = num / total * 100
-            print(column, '{:.2f}'.format(percentage), '0')
+            print(column, '{:.6f}'.format(percentage), '0')
+
+    return percent_missing
 
 
 def convert_dates(df, column='date_recorded'):
@@ -80,12 +96,17 @@ def convert_dates(df, column='date_recorded'):
     epoch_day = dt.datetime.utcfromtimestamp(0)
     
     dates = [(dt.datetime.strptime(date, '%Y-%m-%d')) for date in df[column]]
-    
-    year_months = [date.month for date in dates]
-    df['month'] = year_months
 
-    epoch_days = [(date -  epoch_day).days for date in dates]
-    df['epoch_day'] = epoch_days
+    years = [date.year for date in dates]
+    df['year_recorded'] = years
+
+    year_months = [date.month for date in dates]
+    df['month_recorded'] = year_months
+
+    #epoch_days = [(date -  epoch_day).days for date in dates]
+    #df['epoch_day'] = epoch_days
+
+    df['operation_years'] = df['year_recorded'] - df['construction_year']
 
     df.drop(column, axis=1, inplace=True)
 
@@ -110,7 +131,7 @@ def nan2str(df):
     df[(pd.isnull(df))] = 'none'
 
 
-def label_encode(series, column, label_encoder):
+def label_encode(series, label_encoder):
     '''
     Encodes specified columns using label encoding.
 
@@ -315,7 +336,7 @@ def fill_missing_knn(series, series_missing_flags, df_encoded, k=5):
 
     neigh = KNeighborsClassifier(n_neighbors=k)
 
-    series_exist = series_exist.values.reshape(-1):
+    series_exist = series_exist.values.reshape(-1)
 
     label, indices = neigh.kneigbors(df_exist, n_neighbors=k)
 
