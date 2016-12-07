@@ -262,18 +262,20 @@ def flag_missing_s(series):
 
     if data_type == 'object':
         flags = series.str.contains('none')
-        series_flag_missing[column] = flags
 
     elif data_type == 'float64':
         flags = abs(0 - abs(series)) < 10e-6
-        series_flag_missing[column] = flags
 
     elif data_type == 'int64':
         flags = series == 0
-        series_flag_missing = flags
 
-    return series_flag_missing
+    return flags
 
+def missing2nan(series):
+    flags = flag_missing_s(series)
+    series[flags] = np.nan
+    return series
+    
 def binary_count(series):
     '''
     Calculates length of the number of unique categories, expressed as a binary.
@@ -317,7 +319,7 @@ def binary_encode(series, le):
 
     return binary_encoded, binary_columns, binary_headers
 
-def fill_missing_knn(series, series_missing_flags, df_encoded, k=5):
+def fill_missing_knn(series, df_encoded, k=5):
     '''
     Find the missing values in a series by finding k nearest neighbours and 
     using their information to fill in the missing data.
@@ -325,6 +327,7 @@ def fill_missing_knn(series, series_missing_flags, df_encoded, k=5):
     Returns:
     series - original series with missing values filled in by knn algorithm
     '''
+    series_missing_flags = flag_missing_s(series)
     data_type = series.dtype
 
     series_exist_flags = series_missing_flags == False
