@@ -275,7 +275,7 @@ def missing2nan(series):
     flags = flag_missing_s(series)
     series[flags] = np.nan
     return series
-    
+
 def binary_count(series):
     '''
     Calculates length of the number of unique categories, expressed as a binary.
@@ -338,22 +338,23 @@ def fill_missing_knn(series, df_encoded, k=5):
     df_exist = df_encoded[series_exist_flags]
 
     neigh = KNeighborsClassifier(n_neighbors=k)
+    neigh.fit(df_exist, series_exist)
 
     series_exist = series_exist.values.reshape(-1)
 
-    label, indices = neigh.kneigbors(df_exist, n_neighbors=k)
+    label, indices = neigh.kneighbors(df_missing, n_neighbors=k)
 
-    neigh.fit(df_exist, series_exist)
+    #neigh.fit(df_exist, series_exist)
 
-    if dtype == 'float64':
+    if data_type == 'float64':
         missing_means = [np.mean(series_exist[i]) for i in indices]
         series[series_missing_flags] = missing_means
 
-    elif dtype == 'int64':
+    elif data_type == 'int64':
         missing_means = [int(np.mean(series_exist[i])) for i in indices]
         series[series_missing_flags] = missing_means
 
-    elif dtype == 'object':
+    elif data_type == 'object':
         missing_mode = [stats.mode(series_exist[i]) for i in indices]
         #missing_mode = [list(list(x.mode)[0]) for x in missing_mode]
         series[series_missing_flags] = missing_mode
