@@ -11,6 +11,7 @@ from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import svm
 from sklearn.cross_validation import KFold
 
 
@@ -142,7 +143,7 @@ def label_encode(series, label_encoder):
     return encoded
 
 
-def run_forest(df_X, df_y, n_folds=5, n_estimators=1000):
+def run_forest(df_X, df_y, n_folds=10, n_estimators=2000):
     '''
     Fold data into training and cv sets then train random forest classifier.
 
@@ -152,7 +153,32 @@ def run_forest(df_X, df_y, n_folds=5, n_estimators=1000):
     '''
     kf = KFold(df_X.shape[0], n_folds=n_folds, random_state=123456)
 
-    clf = RandomForestClassifier(n_estimators=n_estimators, n_jobs=2)
+    clf = RandomForestClassifier(n_estimators=n_estimators, n_jobs=3, max_features=10, min_samples_leaf=1)
+    
+    predictions = []
+
+    for train, cv in kf:
+        X = df_X.iloc[train, :]
+        y = df_y['status_group'].iloc[train]
+
+        clf.fit(X, y)
+
+        fold_predictions = clf.predict(df_X.iloc[cv, :])
+        predictions = np.append(predictions, fold_predictions)
+
+    return predictions, clf
+
+def run_svm(df_X, df_y, n_folds=5):
+    '''
+    Fold data into training and cv sets then train random forest classifier.
+
+    Returns:
+    predictions - the predictions obtained from each fold of the input data
+    clf - the trained classifier
+    '''
+    kf = KFold(df_X.shape[0], n_folds=n_folds)
+
+    clf = svm.SVC()
     
     predictions = []
 
@@ -284,12 +310,13 @@ def binary_count(series):
     binary_digits - integer representing the number of binary digits needed to 
                     display the number of unique values in a feature.
     '''
-    binary_digits = len('{0:b}'.format(len(s.unique())))
+    #binary_digits = len('{0:b}'.format(len(series.unique())))
+    binary_digits = len('{0:b}'.format(len(series.unique())))
 
     return binary_digits
 
 
-def binary_encode(series, le):
+def binary_encode(series, le, binary_lengths=None):
     '''
     Encodes categorical data as binary by label encoding them and then 
     converting to binary.
@@ -304,7 +331,10 @@ def binary_encode(series, le):
 
     series =  series.apply(lambda x: str(x))
 
-    binary_digits = binary_count(series)
+    if binary_lengths:
+        binary_digits = binary_lengths
+    else:
+        binary_digits = binary_count(series)
 
     label_encoded = le.fit_transform(series)
 
@@ -314,7 +344,7 @@ def binary_encode(series, le):
 
     binary_encoded = pd.Series(binary_encoded)
 
-    binary_headers = [column + '_' + str(i) for i in range(0, binary_digits)]
+    binary_headers = [series.name + '_' + str(i) for i in range(0, binary_digits)]
     binary_columns = pd.DataFrame(binary_columns, columns=binary_headers)
 
     return binary_encoded, binary_columns, binary_headers
