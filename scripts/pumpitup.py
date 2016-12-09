@@ -143,7 +143,7 @@ def label_encode(series, label_encoder):
     return encoded
 
 
-def run_forest(df_X, df_y, n_folds=10, n_estimators=2000):
+def run_forest(df_X, df_y, n_folds=10, n_estimators=2000, n_jobs=3, max_features=10, min_samples_leaf=1):
     '''
     Fold data into training and cv sets then train random forest classifier.
 
@@ -153,7 +153,8 @@ def run_forest(df_X, df_y, n_folds=10, n_estimators=2000):
     '''
     kf = KFold(df_X.shape[0], n_folds=n_folds, random_state=123456)
 
-    clf = RandomForestClassifier(n_estimators=n_estimators, n_jobs=3, max_features=10, min_samples_leaf=1)
+    clf = RandomForestClassifier(n_estimators=n_estimators,\
+        n_jobs=njobs, max_features=max_features, min_samples_leaf=min_samples_leaf)
     
     predictions = []
 
@@ -391,7 +392,183 @@ def fill_missing_knn(series, df_encoded, k=5):
 
     return series        
 
+def cleanitup(df):
+    df.drop(['id', 'recorded_by', 'num_private'], axis=1, inplace=True)
+    
+    # EXTRACTION TYPES
+    # rename some categories in the finest featureset
+    # drop mid level information in feature extraction_type_group
+    df['extraction_type'].replace('other - swn 81', 'swn 81', inplace=True)
+    df['extraction_type'].replace('other - mkulima/shinyanga', 'other handpump', inplace=True)
+    df['extraction_type'].replace('other - play pump', 'other handpump', inplace=True)
+    df['extraction_type'].replace('cemo', 'other motorpump', inplace=True)
+    df['extraction_type'].replace('climax', 'other motorpump', inplace=True)
+    df.drop('extraction_type_group', axis=1, inplace=True)
+    
+    # MANAGEMENT
+    # do nothing
+    
+    # SCHEME
+    # drop scheme_name as too many categories and missing values
+    # also drop scheme_management as basically the same as management
+    df.drop('scheme_name', axis=1, inplace=True)
+    df.drop('scheme_management', axis=1, inplace=True)
+    
+    # PAYMENT
+    # two identical features - drop payment
+    df.drop('payment', axis=1, inplace=True)
+    
+    # WATER QUALITY
+    # water_quality contains slightly more information than quality_group
+    df.drop('quality_group', axis=1, inplace=True)
+    
+    # QUANTITY
+    # two identical groups - drop quantity_group
+    df.drop('quantity_group', axis=1, inplace=True)
+    
+    #SOURCE
+    # drop mid level source_type
+    df.drop('source_type', axis=1, inplace=True)
+    df['source'].replace('other', 'unknown', inplace=True)
+    
+    # WATERPOINT
+    # drop waterpoint_type_group as less precise than waterpoint_type
+    df.drop('waterpoint_type_group', axis=1, inplace=True)
+    
+    # GEOGRAPHICAL
+    # drop mid level geographic information
+    # keep district_code as this comes in useful later!
+    df.drop(['region_code', 'subvillage', 'ward'], axis=1, inplace=True)
+    
+    lga = df['lga'].copy()
+    lga[lga.str.contains('Rural')] = 'rural'
+    lga[lga.str.contains('Urban')] = 'urban'
+    other_flag = lga.str.contains('rural') | lga.str.contains('urban')
+    other_flag = other_flag == False
+    lga[other_flag] = 'other'
+    df['lga'] = lga
+    
+    # TIME
+    # convert date_recorded to days since epoch and year month
+    df = pumpitup.convert_dates(df)
+    
+    # WATERPOINT NAME
+    df['wpt_name'] = df['wpt_name'].str.lower()
+    df['wpt_name'][df['wpt_name'].str.contains('school')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('shule')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('sekondari')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('secondary')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('sekondari')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('msingi')] = 'school'
+    df['wpt_name'][df['wpt_name'].str.contains('primary')] = 'school'
 
+    df['wpt_name'][df['wpt_name'].str.contains('clinic')] = 'health'
+    df['wpt_name'][df['wpt_name'].str.contains('zahanati')] = 'health'
+    df['wpt_name'][df['wpt_name'].str.contains('health')] = 'health'
+    df['wpt_name'][df['wpt_name'].str.contains('hospital')] = 'health'
+
+    df['wpt_name'][df['wpt_name'].str.contains('ccm')] = 'official'
+    df['wpt_name'][df['wpt_name'].str.contains('office')] = 'official'
+    df['wpt_name'][df['wpt_name'].str.contains('kijiji')] = 'official'
+    df['wpt_name'][df['wpt_name'].str.contains('ofis')] = 'official'
+
+    df['wpt_name'][df['wpt_name'].str.contains('farm')] = 'farm'
+    df['wpt_name'][df['wpt_name'].str.contains('maziwa')] = 'farm'
+
+    df['wpt_name'][df['wpt_name'].str.contains('pump house')] = 'pump'
+
+    df['wpt_name'][df['wpt_name'].str.contains('kanisani')] = 'church'
+    df['wpt_name'][df['wpt_name'].str.contains('church')] = 'church'
+    df['wpt_name'][df['wpt_name'].str.contains('luther')] = 'church'
+    df['wpt_name'][df['wpt_name'].str.contains('anglican')] = 'church'
+    df['wpt_name'][df['wpt_name'].str.contains('pentecost')] = 'church'
+
+    df['wpt_name'][df['wpt_name'].str.contains('center')] = 'center'
+    df['wpt_name'][df['wpt_name'].str.contains('market')] = 'center'
+
+    df['wpt_name'][df['wpt_name'].str.contains('kwa')] = 'name'
+
+    #finally change any values with less than 500 records to 'other' as well as the 'none' values
+    value_counts = df['wpt_name'].value_counts()
+    to_remove = value_counts[value_counts <= 100].index
+    df['wpt_name'].replace(to_remove, 'other', inplace=True)
+
+    df['wpt_name'][df['wpt_name'].str.contains('none')] = 'other'
+    
+    ### MISSING DATA ###
+    df.drop('amount_tsh', axis=1, inplace=True)
+    
+    # LONG - LAT
+    # Use region and district_codes to fill in missing longitude and latitude data
+    mask1 = pumpitup.flag_missing_s(df['longitude'])
+    df['longitude'][mask1] = np.nan
+    df.loc[mask1, 'longitude'] = df.groupby(['region', 'district_code']).transform('mean')
+    mask2 = df['longitude'].isnull()
+    df.loc[mask2, 'longitude'] = df.groupby(['region']).transform('mean')
+    
+    mask3 = pumpitup.flag_missing_s(df['latitude'])
+    df['latitude'][mask3] = np.nan
+    df.loc[mask3, 'latitude'] = df.groupby(['region', 'district_code']).transform('mean')
+    mask4 = df['latitude'].isnull()
+    df.loc[mask4, 'latitude'] = df.groupby(['region']).transform('mean')
+    
+    # GPS HEIGHT
+    # Use KNN imputation of the longitude and latitude variables
+    df_encoded = df[['latitude', 'longitude']]
+    series = df.gps_height
+    height_filled = pumpitup.fill_missing_knn(series, df_encoded, k=5)
+    df['gps_height'] = height_filled
+    
+    # POPULATION
+    # use grouping of geographical area, region and district code to impute missing population data
+    mask1 = pumpitup.flag_missing_s(df['population'])
+    df['population'][mask1] = np.nan
+    df.loc[mask1, 'population'] = df.groupby(['lga', 'region','district_code']).transform('mean')
+    mask2 = df['population'].isnull()
+    df.loc[mask2, 'population'] = df.groupby(['lga', 'region']).transform('mean')
+    mask3 = df['population'].isnull()
+    df.loc[mask3, 'population'] = df.groupby('lga').transform('mean')
+    
+    train_data['population'] = train_data['population'].astype(int)
+    
+    # TIME
+    df['year_recorded'][df['year_recorded'] < df['operation_years']] = df['year_recorded'].median()
+    
+    mask1 = pumpitup.flag_missing_s(df['construction_year'])
+    df['construction_year'][mask1] = np.nan
+    df.loc[mask1, 'construction_year'] = df.groupby(['extraction_type', 'installer']).transform('median')
+    mask2 = df['construction_year'].isnull()
+    df.loc[mask2, 'construction_year'] = df.groupby(['extraction_type']).transform('median')
+    mask3 = df['construction_year'].isnull()
+    df['construction_year'][mask3] = df['construction_year'].median()
+    
+    df['construction_year'] = df['construction_year'].astype(int)
+    
+    df['operation_years'] = (df['year_recorded'] - df['construction_year']).astype(int)
+    df['operation_years'][df['operation_years'] < 0] = df['operation_years'].median()
+    
+    # INSTALLER AND FUNDER
+    mask = df['installer'].isnull()
+    df['installer'][mask] = 'other'
+    df.loc[mask, 'installer'] = df.groupby(['region', 'district_code'])['installer']\
+        .transform(lambda x: x.value_counts().index[0])
+    mask = df['funder'].isnull()
+    df['funder'][mask] = 'other'
+    df.loc[mask, 'funder'] = df.groupby(['region', 'district_code'])['funder']\
+        .transform(lambda x: x.value_counts().index[0])
+        
+    # PERMIT AND PUBLIC MEETING
+    mask = df['permit'].isnull()
+    df['permit'][mask] = True
+    df.loc[mask, 'permit'] = df.groupby(['region', 'district_code'])['permit'].transform(lambda x: x.value_counts().index[0])
+
+    mask = df['public_meeting'].isnull()
+    df['public_meeting'][mask] = True
+    df.loc[mask, 'public_meeting'] = df.groupby(['region', 'district_code'])['public_meeting'].transform(lambda x: x.value_counts().index[0])
+    
+    df.drop('district_code', axis=1, inplace=True)
+    
+    return df
 
 
 
