@@ -393,6 +393,9 @@ def fill_missing_knn(series, df_encoded, k=5):
     return series        
 
 def cleanitup(df):
+    
+    min_cat_size = 0.008 * len(df)
+    
     df.drop(['id', 'recorded_by', 'num_private'], axis=1, inplace=True)
     
     # EXTRACTION TYPES
@@ -490,10 +493,18 @@ def cleanitup(df):
 
     #finally change any values with less than 500 records to 'other' as well as the 'none' values
     value_counts = df['wpt_name'].value_counts()
-    to_remove = value_counts[value_counts <= 100].index
+    to_remove = value_counts[value_counts <= 0.0016 * len(df)].index
     df['wpt_name'].replace(to_remove, 'other', inplace=True)
 
     df['wpt_name'][df['wpt_name'].str.contains('none')] = 'other'
+    
+    # INSTALLER AND FUNDER
+    value_counts = train_data['funder'].value_counts()
+    to_remove = value_counts[value_counts <= min_cat_size].index
+    train_data['funder'].replace(to_remove, 'other', inplace=True)
+    value_counts = train_data['installer'].value_counts()
+    to_remove = value_counts[value_counts <= min_cat_size].index
+    train_data['installer'].replace(to_remove, 'other', inplace=True)
     
     ### MISSING DATA ###
     df.drop('amount_tsh', axis=1, inplace=True)
