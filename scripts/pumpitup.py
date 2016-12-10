@@ -143,7 +143,7 @@ def label_encode(series, label_encoder):
     return encoded
 
 
-def run_forest(df_X, df_y, n_folds=10, n_estimators=2000, n_jobs=3, max_features=10, min_samples_leaf=1):
+def run_forest(df_X, df_y, n_folds=5, n_estimators=1000, n_jobs=3, max_features=10, min_samples_leaf=1):
     '''
     Fold data into training and cv sets then train random forest classifier.
 
@@ -154,7 +154,7 @@ def run_forest(df_X, df_y, n_folds=10, n_estimators=2000, n_jobs=3, max_features
     kf = KFold(df_X.shape[0], n_folds=n_folds, random_state=123456)
 
     clf = RandomForestClassifier(n_estimators=n_estimators,\
-        n_jobs=njobs, max_features=max_features, min_samples_leaf=min_samples_leaf)
+        n_jobs=n_jobs, max_features=max_features, min_samples_leaf=min_samples_leaf)
     
     predictions = []
 
@@ -453,7 +453,7 @@ def cleanitup(df):
     
     # TIME
     # convert date_recorded to days since epoch and year month
-    df = pumpitup.convert_dates(df)
+    df = convert_dates(df)
     
     # WATERPOINT NAME
     df['wpt_name'] = df['wpt_name'].str.lower()
@@ -499,25 +499,25 @@ def cleanitup(df):
     df['wpt_name'][df['wpt_name'].str.contains('none')] = 'other'
     
     # INSTALLER AND FUNDER
-    value_counts = train_data['funder'].value_counts()
+    value_counts = df['funder'].value_counts()
     to_remove = value_counts[value_counts <= min_cat_size].index
-    train_data['funder'].replace(to_remove, 'other', inplace=True)
-    value_counts = train_data['installer'].value_counts()
+    df['funder'].replace(to_remove, 'other', inplace=True)
+    value_counts = df['installer'].value_counts()
     to_remove = value_counts[value_counts <= min_cat_size].index
-    train_data['installer'].replace(to_remove, 'other', inplace=True)
+    df['installer'].replace(to_remove, 'other', inplace=True)
     
     ### MISSING DATA ###
     df.drop('amount_tsh', axis=1, inplace=True)
     
     # LONG - LAT
     # Use region and district_codes to fill in missing longitude and latitude data
-    mask1 = pumpitup.flag_missing_s(df['longitude'])
+    mask1 = flag_missing_s(df['longitude'])
     df['longitude'][mask1] = np.nan
     df.loc[mask1, 'longitude'] = df.groupby(['region', 'district_code']).transform('mean')
     mask2 = df['longitude'].isnull()
     df.loc[mask2, 'longitude'] = df.groupby(['region']).transform('mean')
     
-    mask3 = pumpitup.flag_missing_s(df['latitude'])
+    mask3 = flag_missing_s(df['latitude'])
     df['latitude'][mask3] = np.nan
     df.loc[mask3, 'latitude'] = df.groupby(['region', 'district_code']).transform('mean')
     mask4 = df['latitude'].isnull()
@@ -527,12 +527,12 @@ def cleanitup(df):
     # Use KNN imputation of the longitude and latitude variables
     df_encoded = df[['latitude', 'longitude']]
     series = df.gps_height
-    height_filled = pumpitup.fill_missing_knn(series, df_encoded, k=5)
+    height_filled = fill_missing_knn(series, df_encoded, k=5)
     df['gps_height'] = height_filled
     
     # POPULATION
     # use grouping of geographical area, region and district code to impute missing population data
-    mask1 = pumpitup.flag_missing_s(df['population'])
+    mask1 = flag_missing_s(df['population'])
     df['population'][mask1] = np.nan
     df.loc[mask1, 'population'] = df.groupby(['lga', 'region','district_code']).transform('mean')
     mask2 = df['population'].isnull()
@@ -540,12 +540,12 @@ def cleanitup(df):
     mask3 = df['population'].isnull()
     df.loc[mask3, 'population'] = df.groupby('lga').transform('mean')
     
-    train_data['population'] = train_data['population'].astype(int)
+    df['population'] = df['population'].astype(int)
     
     # TIME
     df['year_recorded'][df['year_recorded'] < df['operation_years']] = df['year_recorded'].median()
     
-    mask1 = pumpitup.flag_missing_s(df['construction_year'])
+    mask1 = flag_missing_s(df['construction_year'])
     df['construction_year'][mask1] = np.nan
     df.loc[mask1, 'construction_year'] = df.groupby(['extraction_type', 'installer']).transform('median')
     mask2 = df['construction_year'].isnull()
