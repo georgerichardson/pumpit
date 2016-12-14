@@ -18,7 +18,10 @@
 - [ ] Look at effects of 
 
 ## Predicting
-- [ ] Predict with singular value decomposition
 - [ ] Optimise random forest input parameters
+- [ ] Optimise categorical variable thresholding
+- [ ] Optimise with and without singular value decomposition
+- [ ] Make final prediction!
 
 ## Other
+- [ ] Custom label encoding
