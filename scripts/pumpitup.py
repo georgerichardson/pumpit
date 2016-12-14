@@ -711,7 +711,7 @@ def cleantestup(df, modifiers):
 
     # change any new or different categories to 'other'
     mask = df['wpt_name'].isin(modifiers['wpt_name'])
-    mask = not mask
+    mask = [not val for val in mask]
     df['wpt_name'][mask] = 'other'
 
     # INSTALLER AND FUNDER
@@ -725,11 +725,11 @@ def cleantestup(df, modifiers):
 
     # change any new or different categories to 'other'
     mask = df['funder'].isin(modifiers['funder'])
-    mask = not mask
+    mask = [not val for val in mask]
     df['funder'][mask] = 'other'
     # change any new or different categories to 'other'
     mask = df['installer'].isin(modifiers['installer'])
-    mask = not mask
+    mask = [not val for val in mask]
     df['installer'][mask] = 'installer'
 
         ### MISSING DATA ###
