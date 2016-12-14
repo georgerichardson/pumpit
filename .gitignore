@@ -1,1 +1,5 @@
+# filetypes
+*.pyc
+
+# files
 test.ipynb
