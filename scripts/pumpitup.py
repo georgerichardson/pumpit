@@ -396,7 +396,7 @@ def cleanitup(df):
 
     min_cat_size = 0.0084 * len(df)
     
-    modifier = {}
+    modifiers = {}
     
     df.drop(['id', 'recorded_by', 'num_private'], axis=1, inplace=True)
     
@@ -509,7 +509,7 @@ def cleanitup(df):
     df['wpt_name'].replace(to_remove, 'other', inplace=True)
 
     df['wpt_name'][df['wpt_name'].str.contains('none')] = 'other'
-    modifiers['wpt_name'] = df['wpt_name'].index.tolist()
+    modifiers['wpt_name'] = df['wpt_name']value_counts().index.tolist()
 
     
     # INSTALLER AND FUNDER
@@ -520,8 +520,8 @@ def cleanitup(df):
     to_remove = value_counts[value_counts <= min_cat_size].index
     df['installer'].replace(to_remove, 'other', inplace=True)
 
-    modifiers['funder'] = df['funder'].index.tolist()
-    modifiers['installer'] = df['installer'].index.tolist()
+    modifiers['funder'] = df['funder']value_counts().index.tolist()
+    modifiers['installer'] = df['installer']value_counts().index.tolist()
     
     ### MISSING DATA ###
     df.drop('amount_tsh', axis=1, inplace=True)
