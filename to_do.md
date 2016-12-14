@@ -10,8 +10,8 @@
 - [x] Impute time data by grouping
 - [x] Impute `permit` and `public_meeting` by grouping
 - [x] Write helper function to repeat training data cleaning stages
-- [ ] Write function to modify test data in exactly the same way
- - [ ] Make sure that re-categorisation of categorical features is consistent between training and test data
+- [x] Write function to modify test data in exactly the same way
+ - [x] Make sure that re-categorisation of categorical features is consistent between training and test data
 
 ## Exploring
 - [ ] Look at K means clustering of training data
