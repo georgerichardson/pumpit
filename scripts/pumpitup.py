@@ -474,20 +474,30 @@ def cleanitup(df):
     df['wpt_name'][df['wpt_name'].str.contains('office')] = 'official'
     df['wpt_name'][df['wpt_name'].str.contains('kijiji')] = 'official'
     df['wpt_name'][df['wpt_name'].str.contains('ofis')] = 'official'
+    df['wpt_name'][df['wpt_name'].str.contains('idara')] = 'official'
 
     df['wpt_name'][df['wpt_name'].str.contains('farm')] = 'farm'
     df['wpt_name'][df['wpt_name'].str.contains('maziwa')] = 'farm'
 
-    df['wpt_name'][df['wpt_name'].str.contains('pump house')] = 'pump'
+    df['wpt_name'][df['wpt_name'].str.contains('pump house')] = 'water'
+    df['wpt_name'][df['wpt_name'].str.contains('pump')] = 'water'
+    df['wpt_name'][df['wpt_name'].str.contains('bombani')] = 'water'
+    df['wpt_name'][df['wpt_name'].str.contains('maji')] = 'water'
+    df['wpt_name'][df['wpt_name'].str.contains('water')] = 'water'
 
-    df['wpt_name'][df['wpt_name'].str.contains('kanisani')] = 'church'
-    df['wpt_name'][df['wpt_name'].str.contains('church')] = 'church'
-    df['wpt_name'][df['wpt_name'].str.contains('luther')] = 'church'
-    df['wpt_name'][df['wpt_name'].str.contains('anglican')] = 'church'
-    df['wpt_name'][df['wpt_name'].str.contains('pentecost')] = 'church'
+    df['wpt_name'][df['wpt_name'].str.contains('kanisani')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('kanisa')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('church')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('luther')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('anglican')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('pentecost')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('msikitini')] = 'religious'
+    df['wpt_name'][df['wpt_name'].str.contains('msikiti')] = 'religious'
 
     df['wpt_name'][df['wpt_name'].str.contains('center')] = 'center'
     df['wpt_name'][df['wpt_name'].str.contains('market')] = 'center'
+    df['wpt_name'][df['wpt_name'].str.contains('sokoni')] = 'center'
+    df['wpt_name'][df['wpt_name'].str.contains('madukani')] = 'center'
 
     df['wpt_name'][df['wpt_name'].str.contains('kwa')] = 'name'
 
