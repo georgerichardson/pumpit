@@ -12,6 +12,7 @@
 - [x] Write helper function to repeat training data cleaning stages
 - [x] Write function to modify test data in exactly the same way
  - [x] Make sure that re-categorisation of categorical features is consistent between training and test data
+- [x] A
 
 ## Exploring
 - [ ] Look at K means clustering of training data
