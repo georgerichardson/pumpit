@@ -143,7 +143,8 @@ def label_encode(series, label_encoder):
     return encoded
 
 
-def run_forest(df_X, df_y, n_folds=5, n_estimators=1000, n_jobs=3, max_features=10, min_samples_leaf=1):
+def run_forest(df_X, df_y, n_folds=5, n_estimators=1000, n_jobs=3, max_features=10,\
+               max_depth=None, min_samples_split=2):
     '''
     Fold data into training and cv sets then train random forest classifier.
 
@@ -154,7 +155,7 @@ def run_forest(df_X, df_y, n_folds=5, n_estimators=1000, n_jobs=3, max_features=
     kf = KFold(df_X.shape[0], n_folds=n_folds, random_state=123456)
 
     clf = RandomForestClassifier(n_estimators=n_estimators,\
-        n_jobs=n_jobs, max_features=max_features, min_samples_leaf=min_samples_leaf)
+        n_jobs=n_jobs, max_features=max_features, max_depth=max_depth, min_samples_split=min_samples_split)
     
     predictions = []
 
@@ -600,9 +601,11 @@ def cleanitup(df):
 
 
 def cleantestup(df, modifiers):
-
+    
+    # set minimum size for a category (0.0084 is approx 500 samples in training data)
     min_cat_size = 0.0084 * len(df)
     
+    # drop immediately unhelpful data
     df.drop(['id', 'recorded_by', 'num_private'], axis=1, inplace=True)
     
     # EXTRACTION TYPES

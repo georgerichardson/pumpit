@@ -12,7 +12,7 @@
 - [x] Write helper function to repeat training data cleaning stages
 - [x] Write function to modify test data in exactly the same way
  - [x] Make sure that re-categorisation of categorical features is consistent between training and test data
-- [ ] Add distance to nearest pump or pump density feature
+- [ ] Add distance to nearest pump or pump density feature (find efficient way to do this - computationally expensive!)
 
 ## Exploring
 - [ ] Look at K means clustering of training data
@@ -22,8 +22,9 @@
 - [ ] Optimise random forest input parameters
 - [ ] Optimise categorical variable thresholding
 - [ ] Optimise with and without singular value decomposition
+- [ ] Optimise with and without weighting
 - [ ] Make final prediction!
 
 ## Other
-- [ ] Custom label encoding
+- [ ] Custom label encoding?
 - [ ] Write README
