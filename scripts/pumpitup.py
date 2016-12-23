@@ -11,6 +11,7 @@ from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import svm
 from sklearn.cross_validation import KFold
 
@@ -156,6 +157,31 @@ def run_forest(df_X, df_y, n_folds=5, n_estimators=1000, n_jobs=3, max_features=
 
     clf = RandomForestClassifier(n_estimators=n_estimators,\
         n_jobs=n_jobs, max_features=max_features, max_depth=max_depth, min_samples_split=min_samples_split)
+    
+    predictions = []
+
+    for train, cv in kf:
+        X = df_X.iloc[train, :]
+        y = df_y['status_group'].iloc[train]
+
+        clf.fit(X, y)
+
+        fold_predictions = clf.predict(df_X.iloc[cv, :])
+        predictions = np.append(predictions, fold_predictions)
+
+    return predictions, clf
+
+def run_gradboost(df_X, df_y, n_folds=5, n_estimators=1000):
+    '''
+    Fold data into training and cv sets then train random forest classifier.
+
+    Returns:
+    predictions - the predictions obtained from each fold of the input data
+    clf - the trained classifier
+    '''
+    kf = KFold(df_X.shape[0], n_folds=n_folds, random_state=123456)
+
+    clf = GradientBoostingClassifier(n_estimators=n_estimators)
     
     predictions = []
 
